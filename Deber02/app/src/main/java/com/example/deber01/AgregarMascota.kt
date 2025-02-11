@@ -6,14 +6,11 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputLayout
 
 class AgregarMascota : AppCompatActivity() {
-    private lateinit var db: BaseDatosSQLite
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_agregar_mascota)
 
-        db = BaseDatosSQLite(this)
-
+        // **Vinculación con los elementos del XML**
         val edtNombre = findViewById<TextInputLayout>(R.id.inputNombreMascota).editText
         val edtEspecie = findViewById<TextInputLayout>(R.id.inputEspecieMascota).editText
         val edtEdad = findViewById<TextInputLayout>(R.id.inputEdadMascota).editText
@@ -35,14 +32,32 @@ class AgregarMascota : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
-                val nuevaMascota = ModeloMascota(0, nombre, especie, edad, idDueno)
-
-                if (db.insertarMascota(nuevaMascota)) {
-                    Toast.makeText(this, "Mascota agregada correctamente", Toast.LENGTH_SHORT).show()
-                    finish()
-                } else {
-                    Toast.makeText(this, "Error al agregar mascota", Toast.LENGTH_SHORT).show()
+                // **Verificamos que el dueño exista**
+                val dueno = BaseDatosDueño.listaDueños.find { it.id == idDueno }
+                if (dueno == null) {
+                    Toast.makeText(this, "El dueño con ID $idDueno no existe", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
                 }
+
+                // **Generamos un ID para la nueva mascota**
+                val nuevoId = if (BaseDatosMascota.listaMascotas.isNotEmpty()) {
+                    BaseDatosMascota.listaMascotas.maxOf { it.id } + 1
+                } else {
+                    1
+                }
+
+                // **Creamos la nueva mascota**
+                val nuevaMascota = ModeloMascota(nuevoId, nombre, especie, edad, idDueno)
+
+                // **Guardamos la mascota en la base de datos**
+                BaseDatosMascota.listaMascotas.add(nuevaMascota)
+
+                // **Agregamos la mascota a la lista de IDs del dueño**
+                dueno.mascotas.add(nuevoId)
+
+                Toast.makeText(this, "Mascota agregada correctamente", Toast.LENGTH_SHORT).show()
+
+                finish() // **Cierra la actividad y regresa a la anterior**
             } else {
                 Toast.makeText(this, "Todos los campos son obligatorios", Toast.LENGTH_SHORT).show()
             }

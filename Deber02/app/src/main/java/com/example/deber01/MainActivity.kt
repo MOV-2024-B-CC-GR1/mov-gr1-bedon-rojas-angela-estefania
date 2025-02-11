@@ -9,102 +9,81 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
     private lateinit var listViewDuenos: ListView
     private lateinit var adapter: ArrayAdapter<String>
-    private var listaDuenos = mutableListOf<ModeloDueño>()
-    private lateinit var db: BaseDatosSQLite
+    private var listaDuenos = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        db = BaseDatosSQLite(this)
-
+        // **Vinculación con los elementos del XML**
         listViewDuenos = findViewById(R.id.listaDuenos)
         val btnCrearDueno = findViewById<Button>(R.id.btnCrearDueno)
         val btnEliminarDueno = findViewById<Button>(R.id.btnEliminarDueno)
         val btnModificarDueno = findViewById<Button>(R.id.btnModificarDueno)
         val btnListaMascotas = findViewById<Button>(R.id.btnListaMascota)
 
-        // **Inicializar adapter antes de usarlo**
-        adapter = ArrayAdapter(this, android.R.layout.simple_list_item_single_choice, mutableListOf())
-        listViewDuenos.adapter = adapter
-        listViewDuenos.choiceMode = ListView.CHOICE_MODE_SINGLE
-
         // **Cargar y mostrar dueños en el ListView**
         cargarListaDuenos()
 
+        adapter = ArrayAdapter(this, android.R.layout.simple_list_item_single_choice, listaDuenos)
+        listViewDuenos.adapter = adapter
+        listViewDuenos.choiceMode = ListView.CHOICE_MODE_SINGLE
+
+        // **Botón para agregar un nuevo dueño**
         btnCrearDueno.setOnClickListener {
             val intent = Intent(this, AgregarDueno::class.java)
             startActivity(intent)
         }
 
+        // **Botón para modificar un dueño seleccionado**
         btnModificarDueno.setOnClickListener {
             val posicion = listViewDuenos.checkedItemPosition
             if (posicion >= 0) {
-                val dueñoSeleccionado = listaDuenos[posicion]
+                val duenoSeleccionado = BaseDatosDueño.listaDueños[posicion]
                 val intent = Intent(this, EditarDueño::class.java)
-                intent.putExtra("duenoId", dueñoSeleccionado.id)
-                startActivityForResult(intent, 2) // Usamos startActivityForResult para actualizar la lista
+                intent.putExtra("duenoId", duenoSeleccionado.id)
+                startActivity(intent)
             } else {
                 Toast.makeText(this, "Selecciona un dueño para editar", Toast.LENGTH_SHORT).show()
             }
         }
 
+        // **Botón para eliminar un dueño seleccionado**
         btnEliminarDueno.setOnClickListener {
             val posicion = listViewDuenos.checkedItemPosition
             if (posicion >= 0) {
-                val dueñoSeleccionado = listaDuenos[posicion]
-                if (db.eliminarDueño(dueñoSeleccionado.id)) {
-                    cargarListaDuenos()
-                    adapter.notifyDataSetChanged()
-                    Toast.makeText(this, "Dueño eliminado", Toast.LENGTH_SHORT).show()
-                }
+                val duenoSeleccionado = BaseDatosDueño.listaDueños[posicion]
+                BaseDatosDueño.listaDueños.remove(duenoSeleccionado)
+                cargarListaDuenos()
+                adapter.notifyDataSetChanged()
+                Toast.makeText(this, "Dueño eliminado", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this, "Selecciona un dueño para eliminar", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // **Botón para ir a la lista de mascota**
+        // **Botón para ir a la lista de mascotas**
         btnListaMascotas.setOnClickListener {
             val intent = Intent(this, Mascota::class.java)
             startActivity(intent)
         }
 
+        // **Al hacer clic en un item, lo marcamos como seleccionado**
         listViewDuenos.setOnItemClickListener { _, view, position, _ ->
             listViewDuenos.setItemChecked(position, true)
             view.isSelected = true
         }
     }
 
+    // **Método para cargar la lista de dueños desde la base de datos**
     private fun cargarListaDuenos() {
         listaDuenos.clear()
-        listaDuenos.addAll(db.obtenerDueños())
-
-        // Obtener nombres de mascotas asociadas a cada dueño
-        val listaTexto = listaDuenos.map { dueno ->
-            val nombresMascotas = dueno.mascotas.joinToString(", ") { mascotaId ->
-                val mascota = db.obtenerMascotaPorId(mascotaId) // Nuevo método
-                mascota?.nombre ?: "Desconocido"
-            }
-
-            "ID: ${dueno.id} - ${dueno.nombre} - ${dueno.telefono} - Mascotas: $nombresMascotas"
-        }
-
-        // Actualizar el adaptador con la nueva lista
-        adapter.clear()
-        adapter.addAll(listaTexto)
-        adapter.notifyDataSetChanged()
+        listaDuenos.addAll(BaseDatosDueño.listaDueños.map { "ID: ${it.id} - ${it.nombre} - ${it.telefono}" })
     }
 
     override fun onResume() {
         super.onResume()
         cargarListaDuenos()
+        adapter.notifyDataSetChanged()
     }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 2 && resultCode == RESULT_OK) {
-            cargarListaDuenos() // Recargar la lista después de editar
-        }
-    }
-
 }

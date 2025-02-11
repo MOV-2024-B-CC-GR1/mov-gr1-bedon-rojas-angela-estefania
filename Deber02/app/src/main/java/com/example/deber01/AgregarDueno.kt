@@ -15,23 +15,29 @@ class AgregarDueno : AppCompatActivity() {
         val edtDireccion = findViewById<TextInputLayout>(R.id.inputDireccionDueno).editText
         val btnGuardar = findViewById<Button>(R.id.btnGuardarDueno)
 
-        val db = BaseDatosSQLite(this)
-
         btnGuardar.setOnClickListener {
             val nombre = edtNombre?.text.toString().trim()
             val telefono = edtTelefono?.text.toString().trim()
             val direccion = edtDireccion?.text.toString().trim()
 
             if (nombre.isNotEmpty() && telefono.isNotEmpty() && direccion.isNotEmpty()) {
-                val nuevoDueño = ModeloDueño(0, nombre, telefono, direccion, mutableListOf())
-
-                if (db.insertarDueño(nuevoDueño)) {
-                    Toast.makeText(this, "Dueño agregado correctamente", Toast.LENGTH_SHORT).show()
-                    setResult(RESULT_OK)
-                    finish()
+                // **Generamos el ID de manera dinámica**
+                val nuevoId = if (BaseDatosDueño.listaDueños.isNotEmpty()) {
+                    BaseDatosDueño.listaDueños.maxOf { it.id } + 1
                 } else {
-                    Toast.makeText(this, "Error al agregar dueño", Toast.LENGTH_SHORT).show()
+                    1
                 }
+
+                val nuevoDueño = ModeloDueño(nuevoId, nombre, telefono, direccion, mutableListOf())
+
+                // **Agregamos a la lista en memoria**
+                BaseDatosDueño.listaDueños.add(nuevoDueño)
+
+                // **Mensaje de confirmación**
+                Toast.makeText(this, "Dueño agregado correctamente", Toast.LENGTH_SHORT).show()
+
+                // **Finaliza la actividad y vuelve a la pantalla anterior**
+                finish()
             } else {
                 Toast.makeText(this, "Todos los campos son obligatorios", Toast.LENGTH_SHORT).show()
             }

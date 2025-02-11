@@ -7,13 +7,10 @@ import com.google.android.material.textfield.TextInputEditText
 
 class EditarMascota : AppCompatActivity() {
     private var mascotaId: Int = -1
-    private lateinit var db: BaseDatosSQLite
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_editar_mascota)
-
-        db = BaseDatosSQLite(this)
 
         // **Vinculación con los elementos del XML**
         val inputNombre = findViewById<TextInputEditText>(R.id.inputEditNombreMascota)
@@ -22,19 +19,18 @@ class EditarMascota : AppCompatActivity() {
         val inputIdDueno = findViewById<TextInputEditText>(R.id.inputEditIdDuenoMascota)
         val btnGuardar = findViewById<Button>(R.id.btnGuardarCambiosMascota)
 
-        // **Obtener el ID de la mascota del Intent**
+        // **Obtener datos del Intent**
         mascotaId = intent.getIntExtra("mascotaId", -1)
 
         // **Buscar la mascota en la base de datos**
-        val mascota = db.obtenerMascotaPorId(mascotaId)
+        val mascota = BaseDatosMascota.listaMascotas.find { it.id == mascotaId }
 
-        // **Si la mascota existe, llenamos los campos**
+        // **Si la mascota existe, rellenamos los campos**
         mascota?.let {
             inputNombre.setText(it.nombre)
             inputEspecie.setText(it.especie)
             inputEdad.setText(it.edad.toString())
             inputIdDueno.setText(it.idDueno.toString()) // No editable
-            inputIdDueno.isEnabled = false
         }
 
         // **Guardar cambios al presionar el botón**
@@ -52,15 +48,15 @@ class EditarMascota : AppCompatActivity() {
                         return@setOnClickListener
                     }
 
-                    // **Actualizar en la base de datos**
-                    val mascotaActualizada = ModeloMascota(mascota.id, nuevoNombre, nuevaEspecie, nuevaEdad, mascota.idDueno)
-                    if (db.actualizarMascota(mascotaActualizada)) {
-                        Toast.makeText(this, "Mascota editada correctamente", Toast.LENGTH_SHORT).show()
-                        setResult(RESULT_OK) // **Indica que los cambios fueron guardados**
-                        finish() // **Cerrar actividad y regresar**
-                    } else {
-                        Toast.makeText(this, "Error al actualizar mascota", Toast.LENGTH_SHORT).show()
-                    }
+                    // **Actualizar datos en la lista**
+                    mascota.nombre = nuevoNombre
+                    mascota.especie = nuevaEspecie
+                    mascota.edad = nuevaEdad
+
+                    Toast.makeText(this, "Mascota editada correctamente", Toast.LENGTH_SHORT).show()
+
+                    setResult(RESULT_OK) // **Indica que los cambios fueron guardados**
+                    finish() // **Cerrar actividad y regresar**
                 } else {
                     Toast.makeText(this, "Todos los campos son obligatorios", Toast.LENGTH_SHORT).show()
                 }
