@@ -21,6 +21,8 @@ class EditarDueño : AppCompatActivity() {
         val inputNombre = findViewById<TextInputEditText>(R.id.inputEditNombreDueno)
         val inputTelefono = findViewById<TextInputEditText>(R.id.inputEditTelefonoDueno)
         val inputDireccion = findViewById<TextInputEditText>(R.id.inputEditDireccionDueno)
+        val inputLat = findViewById<TextInputEditText>(R.id.inputEditLatDueno)  // NUEVO
+        val inputLng = findViewById<TextInputEditText>(R.id.inputEditLngDueno)  // NUEVO
         val btnGuardar = findViewById<Button>(R.id.btnGuardarCambiosDueno)
 
         // Obtener ID del dueño desde el Intent
@@ -35,6 +37,8 @@ class EditarDueño : AppCompatActivity() {
                 inputNombre.setText(it.nombre)
                 inputTelefono.setText(it.telefono)
                 inputDireccion.setText(it.direccion)
+                inputLat.setText(it.lat.toString())  // NUEVO
+                inputLng.setText(it.lng.toString())  // NUEVO
             }
 
             // Guardar cambios
@@ -42,9 +46,19 @@ class EditarDueño : AppCompatActivity() {
                 val nuevoNombre = inputNombre.text.toString().trim()
                 val nuevoTelefono = inputTelefono.text.toString().trim()
                 val nuevaDireccion = inputDireccion.text.toString().trim()
+                val nuevaLat = inputLat.text.toString().toDoubleOrNull() ?: 0.0
+                val nuevaLng = inputLng.text.toString().toDoubleOrNull() ?: 0.0
 
                 if (nuevoNombre.isNotEmpty() && nuevoTelefono.isNotEmpty() && nuevaDireccion.isNotEmpty()) {
-                    val dueñoActualizado = ModeloDueño(duenoId, nuevoNombre, nuevoTelefono, nuevaDireccion, mutableListOf())
+                    val dueñoActualizado = ModeloDueño(
+                        id = duenoId,
+                        nombre = nuevoNombre,
+                        telefono = nuevoTelefono,
+                        direccion = nuevaDireccion,
+                        mascotas = mutableListOf(),
+                        lat = nuevaLat,  // NUEVO
+                        lng = nuevaLng   // NUEVO
+                    )
 
                     if (db.actualizarDueño(dueñoActualizado)) {
                         Toast.makeText(this, "Dueño actualizado correctamente", Toast.LENGTH_SHORT).show()

@@ -5,28 +5,30 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class BaseDatosSQLite(context: Context) : SQLiteOpenHelper(context, "DueñosDB", null, 2) {
+class BaseDatosSQLite(context: Context) : SQLiteOpenHelper(context, "DueñosDB", null, 3) {
     override fun onCreate(db: SQLiteDatabase) {
         val crearTablaDueños = """
-            CREATE TABLE IF NOT EXISTS Dueños (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT NOT NULL,
-                telefono TEXT NOT NULL,
-                direccion TEXT NOT NULL
-            )
-        """.trimIndent()
+        CREATE TABLE IF NOT EXISTS Dueños (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            telefono TEXT NOT NULL,
+            direccion TEXT NOT NULL,
+            latitud REAL,  -- Nueva columna
+            longitud REAL  -- Nueva columna
+        )
+    """.trimIndent()
         db.execSQL(crearTablaDueños)
 
         val crearTablaMascotas = """
-            CREATE TABLE IF NOT EXISTS Mascotas (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT NOT NULL,
-                especie TEXT NOT NULL,
-                edad INTEGER NOT NULL,
-                idDueno INTEGER NOT NULL,
-                FOREIGN KEY (idDueno) REFERENCES Dueños(id) ON DELETE CASCADE
-            )
-        """.trimIndent()
+        CREATE TABLE IF NOT EXISTS Mascotas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            especie TEXT NOT NULL,
+            edad INTEGER NOT NULL,
+            idDueno INTEGER NOT NULL,
+            FOREIGN KEY (idDueno) REFERENCES Dueños(id) ON DELETE CASCADE
+        )
+    """.trimIndent()
         db.execSQL(crearTablaMascotas)
     }
 
@@ -43,6 +45,8 @@ class BaseDatosSQLite(context: Context) : SQLiteOpenHelper(context, "DueñosDB",
         valores.put("nombre", dueño.nombre)
         valores.put("telefono", dueño.telefono)
         valores.put("direccion", dueño.direccion)
+        valores.put("latitud", dueño.lat)
+        valores.put("longitud", dueño.lng)
         val resultado = db.insert("Dueños", null, valores)
         db.close()
         return resultado != -1L
@@ -88,11 +92,13 @@ class BaseDatosSQLite(context: Context) : SQLiteOpenHelper(context, "DueñosDB",
 
         return if (cursor.moveToFirst()) {
             val dueno = ModeloDueño(
-                cursor.getInt(0),
-                cursor.getString(1),
-                cursor.getString(2),
-                cursor.getString(3),
-                mutableListOf() // No es necesario cargar mascotas aquí
+                id = cursor.getInt(0),
+                nombre = cursor.getString(1),
+                telefono = cursor.getString(2),
+                direccion = cursor.getString(3),
+                mascotas = mutableListOf(),
+                lat = cursor.getDouble(4), // NUEVO
+                lng = cursor.getDouble(5)  // NUEVO
             )
             cursor.close()
             db.close()
@@ -103,7 +109,6 @@ class BaseDatosSQLite(context: Context) : SQLiteOpenHelper(context, "DueñosDB",
             null
         }
     }
-
 
     // **Eliminar dueño por ID**
     fun eliminarDueño(id: Int): Boolean {
@@ -120,6 +125,8 @@ class BaseDatosSQLite(context: Context) : SQLiteOpenHelper(context, "DueñosDB",
         valores.put("nombre", dueño.nombre)
         valores.put("telefono", dueño.telefono)
         valores.put("direccion", dueño.direccion)
+        valores.put("latitud", dueño.lat)
+        valores.put("longitud", dueño.lng)
         val resultado = db.update("Dueños", valores, "id=?", arrayOf(dueño.id.toString()))
         db.close()
         return resultado > 0

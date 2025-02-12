@@ -23,6 +23,7 @@ class MainActivity : AppCompatActivity() {
         val btnEliminarDueno = findViewById<Button>(R.id.btnEliminarDueno)
         val btnModificarDueno = findViewById<Button>(R.id.btnModificarDueno)
         val btnListaMascotas = findViewById<Button>(R.id.btnListaMascota)
+        val verMapaButton = findViewById<Button>(R.id.btnVerMapa)
 
         // **Inicializar adapter antes de usarlo**
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_single_choice, mutableListOf())
@@ -31,6 +32,18 @@ class MainActivity : AppCompatActivity() {
 
         // **Cargar y mostrar dueños en el ListView**
         cargarListaDuenos()
+
+        verMapaButton.setOnClickListener {
+            val posicion = listViewDuenos.checkedItemPosition
+            if (posicion >= 0) {
+                val duenoSeleccionado = listaDuenos[posicion]
+                val intent = Intent(this, MapaActivity::class.java)
+                intent.putExtra("duenoId", duenoSeleccionado.id)
+                startActivity(intent)
+            } else {
+                Toast.makeText(this, "Selecciona un dueño para ver el mapa", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         btnCrearDueno.setOnClickListener {
             val intent = Intent(this, AgregarDueno::class.java)
